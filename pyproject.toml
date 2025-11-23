@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vectorwave"
-version = "0.1.8"
+version = "0.1.9"
 authors = [
     { name = "junyeonggim", email = "junyeonggim5@gmail.com" },
 ]
@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/republicofgamja/vtm"
+Repository = "https://github.com/cozymori/vectorwave"
 
 [tool.setuptools.packages.find]
 where = ["src"]
