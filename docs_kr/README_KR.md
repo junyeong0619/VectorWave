@@ -627,6 +627,24 @@ import my_service.payment
 my_service.payment.process_transaction()
 ```
 
+## 🌌 에코시스템 (Ecosystem)
+
+VectorWave는 관측 가능성(Observability)부터 테스트까지, AI 엔지니어링의 전체 수명 주기를 최적화하기 위해 설계된 더 큰 생태계의 일부입니다.
+
+### 🏄‍♂️ [VectorSurfer](https://github.com/cozymori/vectorsurfer)
+> **AI의 실행 흐름을 시각적으로 확인하세요.**
+**VectorSurfer**는 VectorWave를 위한 종합 웹 대시보드입니다. 직관적인 인터페이스를 통해 복잡한 실행 추적(Trace)을 시각화하고, 실시간으로 에러율을 모니터링하며, 자가 치유(Healer) 프로세스를 손쉽게 관리할 수 있습니다.
+* **Trace 시각화:** 복잡한 실행 흐름(Span)과 지연 시간(Latency) 워터폴 차트를 한눈에 파악합니다.
+* **에러 모니터링:** 에러 발생 추이를 추적하고 상세 실패 로그를 분석합니다.
+* **Healer 인터페이스:** VectorWave Healer가 제안한 코드 수정 사항을 웹에서 검토하고 적용합니다.
+
+### ✅ [VectorCheck](https://github.com/cozymori/vectorcheck)
+> **단순 문자열이 아닌, AI의 "의도(Intent)"를 테스트하세요.**
+**VectorCheck**는 AI 에이전트를 위한 회귀 테스트(Regression Testing) 프레임워크입니다. 깨지기 쉬운 단순 문자열 비교(`assert a == b`) 대신, 벡터 유사도를 사용하여 AI의 출력이 의도한 정답("Golden Data")과 의미적으로 일치하는지 검증합니다.
+* **의미론적 검증(Semantic Assertions):** 단어 선택이 조금 다르더라도, 출력이 예상 결과와 *의미적으로* 유사하면 테스트를 통과시킵니다.
+* **골든 데이터 리플레이(Golden Data Replay):** 검증된 운영 환경의 성공 로그를 자동으로 가져와 재실행(Replay)함으로써, 코드 변경 후에도 기능이 정상 작동하는지 확인합니다.
+* **CLI 대시보드:** 복잡한 설정 없이 터미널에서 즉시 테스트를 실행하고 결과를 직관적으로 확인합니다.
+
 ## 🤝 기여 (Contributing)
 
 버그 보고, 기능 요청, 코드 기여 등 모든 형태의 기여를 환영합니다. 자세한 내용은 [CONTRIBUTING.md](https://www.google.com/search?q=httpsS://www.google.com/search%3Fq%3DCONTRIBUTING.md)를 참고해 주세요.

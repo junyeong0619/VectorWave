@@ -626,6 +626,24 @@ import my_service.payment
 my_service.payment.process_transaction()
 ```
 
+## 🌌 Ecosystem
+
+VectorWave is part of a larger ecosystem designed to optimize the entire lifecycle of AI engineering, from observability to testing.
+
+### 🏄‍♂️ [VectorSurfer](https://github.com/cozymori/vectorsurfer)
+> **Visualize your AI flows instantly.**
+**VectorSurfer** is a comprehensive dashboard for VectorWave. It allows you to visualize execution traces, monitor error rates in real-time, and manage self-healing processes through an intuitive web interface.
+* **Trace Visualization:** View complex execution flows (Spans) and latency waterfalls at a glance.
+* **Error Monitoring:** Track error trends and inspect detailed failure logs.
+* **Healer Interface:** Review and apply code fixes suggested by the VectorWave Healer.
+
+### ✅ [VectorCheck](https://github.com/cozymori/vectorcheck)
+> **Test your AI with "Intent", not just strings.**
+**VectorCheck** is an AI-native regression testing framework. Instead of brittle exact string matching (`assert a == b`), it uses vector similarity to validate if the AI's output matches the intended meaning ("Golden Data").
+* **Semantic Assertions:** Pass tests if the output is *semantically* similar to the expected result, even if the wording differs.
+* **Golden Data Replay:** Automatically fetch and replay successful production logs to verify new code changes.
+* **CLI Dashboard:** Run tests and view results directly in your terminal with zero configuration.
+
 ## 🤝 Contributing
 
 We welcome all forms of contributions, including bug reports, feature requests, and code contributions. Please refer to [CONTRIBUTING.md](https://www.google.com/search?q=httpsS://www.google.com/search%3Fq%3DCONTRIBUTING.md) for details.
