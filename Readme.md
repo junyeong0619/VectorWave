@@ -1,4 +1,4 @@
-Need more information? Visit [here](https://cozymori.github.io/vectorwave-docs/)
+Need more information? Visit [here](https://www.cozymori.net/vectorwave)
 
 # VectorWave
 ![Star](https://badgen.net/github/stars/cozymori/vectorwave)
