@@ -184,6 +184,12 @@ def _create_span_properties(
     return span_properties
 
 
+# Keys the @vectorize decorator injects into call kwargs for its own bookkeeping.
+# They must be excluded from the vectorized text so a stored execution embeds the
+# same input as the cache-lookup path (which only sees the caller's own args).
+_RESERVED_VECTOR_KEYS = frozenset({"function_uuid", "exec_source", "trace_id"})
+
+
 def _create_input_vector_data(
         func_name: str,
         args: tuple,
@@ -240,10 +246,19 @@ def _perform_background_logging(ctx: SpanContext):
         if vectorizer is not None:
             try:
                 if ctx.status == "SUCCESS" and ctx.capture_return_value:
+                    # The cache lookup embeds only the caller's original args/kwargs.
+                    # Match it here by stripping the keys the decorator injects
+                    # (function_uuid, exec_source, trace_id) — otherwise the stored
+                    # vector never aligns with the lookup vector and the semantic
+                    # cache can never hit at a sane threshold.
+                    clean_kwargs = {
+                        k: v for k, v in ctx.kwargs.items()
+                        if k not in _RESERVED_VECTOR_KEYS
+                    }
                     input_vector_data = _create_input_vector_data(
                         func_name=ctx.func.__name__,
                         args=ctx.args,
-                        kwargs=ctx.kwargs,
+                        kwargs=clean_kwargs,
                         sensitive_keys=ctx.tracer.settings.sensitive_keys
                     )
                     vector_to_add = vectorizer.embed(input_vector_data['text'])

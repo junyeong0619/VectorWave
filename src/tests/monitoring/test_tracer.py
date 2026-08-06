@@ -421,3 +421,57 @@ def test_enable_alert_false_default_is_true(mock_tracer_deps):
     my_workflow()
 
     mock_alerter.notify.assert_called_once()
+
+
+def test_reserved_keys_excluded_from_cache_vector(mock_tracer_deps, monkeypatch):
+    """
+    Regression: the @vectorize decorator injects bookkeeping keys
+    (function_uuid, exec_source, trace_id) into call kwargs. Those must NOT
+    leak into the vectorized text — otherwise a stored execution embeds a
+    different input than the cache-lookup path (which only sees the caller's
+    own args) and the semantic cache can never hit at a sane threshold.
+    See tracer._RESERVED_VECTOR_KEYS.
+    """
+    from vectorwave.monitoring.tracer import _create_input_vector_data
+
+    class _SpyVectorizer:
+        def __init__(self):
+            self.texts = []
+
+        def embed(self, text):
+            self.texts.append(text)
+            return [0.0] * 8
+
+    spy = _SpyVectorizer()
+    monkeypatch.setattr(f"{TRACER_MODULE_PATH}.get_vectorizer",
+                        MagicMock(return_value=spy))
+
+    @trace_root()
+    @trace_span(capture_return_value=True)
+    def summarize(text, **_injected):
+        return f"summary of {text}"
+
+    summarize(
+        "hello world",
+        function_uuid="uuid-should-not-leak",
+        exec_source="REALTIME",
+        trace_id="trace-should-not-leak",
+    )
+
+    assert spy.texts, "vectorizer.embed was never called for the successful span"
+    stored_text = spy.texts[-1]
+
+    # Neither the reserved key names nor their values may appear in the vector.
+    for leaked in ("function_uuid", "exec_source",
+                   "uuid-should-not-leak", "REALTIME", "trace-should-not-leak"):
+        assert leaked not in stored_text, f"{leaked!r} leaked into cache vector text"
+
+    # The stored text must equal what the cache-lookup path builds from the
+    # caller's own args — so identical inputs embed to identical vectors.
+    expected = _create_input_vector_data(
+        func_name="summarize",
+        args=("hello world",),
+        kwargs={},
+        sensitive_keys=mock_tracer_deps["settings"].sensitive_keys,
+    )["text"]
+    assert stored_text == expected
