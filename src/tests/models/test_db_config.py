@@ -126,10 +126,14 @@ def test_get_settings_loads_global_custom_values(mock_env_get, mock_open_file, m
     # MOCK_JSON_DATA defines "run_id" and "experiment_id".
     # Set os.environ.get("RUN_ID") to return "test-run-123".
     # Set os.environ.get("EXPERIMENT_ID") to return None.
-    def mock_env_side_effect(key):
+    # Accept the optional `default` arg so this global os.environ.get patch stays
+    # compatible with 2-arg calls made elsewhere during the test window (e.g.
+    # os.environ.get("VECTORWAVE_MODE", "pro") from background init) — otherwise
+    # the full-suite run raises TypeError intermittently.
+    def mock_env_side_effect(key, default=None):
         if key == "RUN_ID":
             return "test-run-123"
-        return None
+        return default
 
     mock_env_get.side_effect = mock_env_side_effect
     get_weaviate_settings.cache_clear()
