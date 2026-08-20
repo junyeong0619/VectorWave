@@ -475,3 +475,47 @@ def test_reserved_keys_excluded_from_cache_vector(mock_tracer_deps, monkeypatch)
         sensitive_keys=mock_tracer_deps["settings"].sensitive_keys,
     )["text"]
     assert stored_text == expected
+
+
+def test_cache_lookup_vector_reused_on_storage(mock_tracer_deps, monkeypatch):
+    """
+    Efficiency: when the semantic-cache lookup has already embedded this call's
+    input, the storage path reuses that vector instead of embedding the identical
+    text a second time (halves embeddings on a cache miss). Reuse is matched on
+    text, so a stale value never leaks into a different call.
+    """
+    from vectorwave.monitoring.tracer import (
+        _create_input_vector_data, _cache_lookup_vector_var,
+    )
+
+    class _CountingVectorizer:
+        def __init__(self):
+            self.calls = 0
+
+        def embed(self, text):
+            self.calls += 1
+            return [0.1] * 8
+
+    spy = _CountingVectorizer()
+    monkeypatch.setattr(f"{TRACER_MODULE_PATH}.get_vectorizer",
+                        MagicMock(return_value=spy))
+
+    @trace_root()
+    @trace_span(capture_return_value=True, force_sync=True)
+    def summarize(text):
+        return f"summary of {text}"
+
+    # Pre-stash the vector the lookup path would have produced for this exact input.
+    text = _create_input_vector_data(
+        "summarize", ("hi",), {}, mock_tracer_deps["settings"].sensitive_keys,
+    )["text"]
+    sentinel = [0.9] * 8
+    _cache_lookup_vector_var.set((text, sentinel))
+
+    summarize("hi")
+
+    assert spy.calls == 0, "storage re-embedded instead of reusing the lookup vector"
+    stored_vector = mock_tracer_deps["batch"].add_object.call_args.kwargs["vector"]
+    assert stored_vector == sentinel
+    # And the stash is cleared so it can't leak to the next call.
+    assert _cache_lookup_vector_var.get() is None

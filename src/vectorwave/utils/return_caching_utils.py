@@ -8,7 +8,7 @@ from weaviate.util import generate_uuid5
 
 from ..models.db_config import get_weaviate_settings, WeaviateSettings
 from ..monitoring.tracer import _create_input_vector_data, current_tracer_var, \
-    current_span_id_var
+    current_span_id_var, _cache_lookup_vector_var
 from .serialization import deserialize_return_value as _deserialize_return_value
 from ..database.db_search import search_similar_execution
 from ..vectorizer.factory import get_vectorizer
@@ -60,6 +60,10 @@ def _check_and_return_cached_result(
 
         # (B) Vectorize
         input_vector = vectorizer.embed(input_vector_data['text'])
+
+        # Stash for the storage path: on a cache miss the trace logger would
+        # otherwise embed this exact text again. Reused only when the text matches.
+        _cache_lookup_vector_var.set((input_vector_data['text'], input_vector))
 
         # (C) Priority 1: Search Golden Dataset
         store = get_vector_store()

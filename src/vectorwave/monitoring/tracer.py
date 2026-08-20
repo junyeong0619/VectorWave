@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass
 from functools import wraps, lru_cache
 from contextvars import ContextVar
-from typing import Optional, List, Dict, Any, Callable
+from typing import Optional, List, Dict, Any, Callable, Tuple
 from uuid import uuid4
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
@@ -42,6 +42,14 @@ class TraceCollector:
 
 current_tracer_var: ContextVar[Optional[TraceCollector]] = ContextVar('current_tracer', default=None)
 current_span_id_var: ContextVar[Optional[str]] = ContextVar('current_span_id', default=None)
+
+# When the semantic-cache lookup has already embedded this call's input text, it
+# stashes (text, vector) here so the storage path can reuse it instead of embedding
+# the identical text a second time on a cache miss. semantic_cache=True forces
+# synchronous logging, so the value is read back in the same context; matching on
+# the text keeps a stale value from ever being reused for a different call.
+_cache_lookup_vector_var: ContextVar[Optional[Tuple[str, List[float]]]] = ContextVar(
+    'cache_lookup_vector', default=None)
 
 
 @dataclass
@@ -261,7 +269,12 @@ def _perform_background_logging(ctx: SpanContext):
                         kwargs=clean_kwargs,
                         sensitive_keys=ctx.tracer.settings.sensitive_keys
                     )
-                    vector_to_add = vectorizer.embed(input_vector_data['text'])
+                    pre = _cache_lookup_vector_var.get()
+                    if pre is not None and pre[0] == input_vector_data['text']:
+                        vector_to_add = pre[1]        # reuse the cache-lookup embedding
+                    else:
+                        vector_to_add = vectorizer.embed(input_vector_data['text'])
+                    _cache_lookup_vector_var.set(None)
                 elif ctx.status != "SUCCESS":
                     vector_to_add = vectorizer.embed(str(ctx.error_msg))
             except Exception as ve:
